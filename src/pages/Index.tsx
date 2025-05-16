@@ -1,13 +1,12 @@
 
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { Zap, Github } from "lucide-react";
+import { Zap } from "lucide-react";
 import Header from "@/components/Header";
 import ComponentPreview from "@/components/PagePreview";
 import PromptInput from "@/components/PromptInput";
 import { ComponentGeneratorService } from "@/services/landingPageService";
 import { GenerateComponentParams, GeneratedComponent } from "@/types/gemini";
-import { Button } from "@/components/ui/button";
 
 // Fixed Gemini API key
 const GEMINI_API_KEY = "AIzaSyDHrZrJY9LyzpNEUTg76vJ2jYryTs2Vrzc";
@@ -52,11 +51,6 @@ const Index = () => {
     }
   };
 
-  const handleGithubExport = () => {
-    window.open("https://github.com/new", "_blank");
-    toast.success("Ready to export to GitHub! Create a new repository and upload your code.");
-  };
-
   return (
     <div className="min-h-screen flex flex-col">
       <Header />
@@ -96,14 +90,6 @@ const Index = () => {
                     <li>Copy the HTML to use in your project</li>
                   </ul>
                 </div>
-                
-                <Button 
-                  className="w-full flex items-center justify-center gap-2"
-                  onClick={handleGithubExport}
-                >
-                  <Github className="h-4 w-4" />
-                  Export to GitHub
-                </Button>
               </div>
             )}
           </div>
