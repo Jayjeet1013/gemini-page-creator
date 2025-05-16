@@ -1,6 +1,7 @@
 
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
+import { Zap } from "lucide-react";
 import ApiKeyInput from "@/components/ApiKeyInput";
 import Header from "@/components/Header";
 import PagePreview from "@/components/PagePreview";
