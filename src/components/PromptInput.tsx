@@ -81,7 +81,7 @@ const PromptInput = ({ onGenerate, isGenerating }: PromptInputProps) => {
                   <SelectValue placeholder="Select industry" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Any Industry</SelectItem>
+                  <SelectItem value="any">Any Industry</SelectItem>
                   {industries.map((ind) => (
                     <SelectItem key={ind} value={ind.toLowerCase()}>{ind}</SelectItem>
                   ))}
