@@ -11,10 +11,10 @@ import {
   SelectValue 
 } from "@/components/ui/select";
 import { Zap } from "lucide-react";
-import { GenerateLandingPageParams } from "@/types/gemini";
+import { ComponentType, GenerateComponentParams } from "@/types/gemini";
 
 interface PromptInputProps {
-  onGenerate: (params: GenerateLandingPageParams) => void;
+  onGenerate: (params: GenerateComponentParams) => void;
   isGenerating: boolean;
 }
 
@@ -23,19 +23,14 @@ const PromptInput = ({ onGenerate, isGenerating }: PromptInputProps) => {
   const [industry, setIndustry] = useState("");
   const [style, setStyle] = useState("modern");
   const [tone, setTone] = useState("professional");
-  const [selectedSections, setSelectedSections] = useState<string[]>([
-    "hero", 
-    "features", 
-    "testimonial", 
-    "cta"
-  ]);
+  const [componentType, setComponentType] = useState<ComponentType>("hero");
 
   const handleGenerate = () => {
     if (!prompt.trim()) return;
     
     onGenerate({
       prompt: prompt.trim(),
-      sections: selectedSections,
+      componentType,
       style,
       tone,
       industry: industry || undefined
@@ -48,32 +43,57 @@ const PromptInput = ({ onGenerate, isGenerating }: PromptInputProps) => {
     "Fitness", "Entertainment", "Marketing", "Non-profit"
   ];
 
-  const toggleSection = (section: string) => {
-    if (selectedSections.includes(section)) {
-      setSelectedSections(selectedSections.filter(s => s !== section));
-    } else {
-      setSelectedSections([...selectedSections, section]);
-    }
-  };
+  const componentTypes: { label: string; value: ComponentType }[] = [
+    { label: "Header", value: "header" },
+    { label: "Footer", value: "footer" },
+    { label: "Sign Up Form", value: "signup" },
+    { label: "Login Form", value: "login" },
+    { label: "Features Section", value: "features" },
+    { label: "Pricing Table", value: "pricing" },
+    { label: "Testimonial", value: "testimonial" },
+    { label: "Call to Action", value: "cta" },
+    { label: "Hero Section", value: "hero" },
+    { label: "Contact Form", value: "contact" },
+    { label: "About Section", value: "about" },
+    { label: "FAQ Section", value: "faq" },
+    { label: "Gallery/Portfolio", value: "gallery" },
+    { label: "Statistics", value: "stats" },
+    { label: "Team Section", value: "team" },
+    { label: "Newsletter", value: "newsletter" }
+  ];
 
   return (
     <Card className="w-full">
       <CardHeader>
         <CardTitle className="text-xl font-medium flex items-center gap-2">
           <Zap className="h-5 w-5 text-gemini-deepblue" />
-          Describe Your Landing Page
+          Describe Your Component
         </CardTitle>
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
           <Textarea
-            placeholder="Describe the landing page you want to create... (e.g., 'A landing page for a productivity app that helps remote teams collaborate better')"
+            placeholder="Describe the component you want to create... (e.g., 'A sleek signup form for a SaaS product with email and password fields')"
             className="min-h-[120px] resize-none"
             value={prompt}
             onChange={(e) => setPrompt(e.target.value)}
           />
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Component Type</label>
+              <Select value={componentType} onValueChange={(value) => setComponentType(value as ComponentType)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select component type" />
+                </SelectTrigger>
+                <SelectContent>
+                  {componentTypes.map((type) => (
+                    <SelectItem key={type.value} value={type.value}>{type.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
             <div className="space-y-2">
               <label className="text-sm font-medium">Industry (Optional)</label>
               <Select value={industry} onValueChange={setIndustry}>
@@ -121,37 +141,15 @@ const PromptInput = ({ onGenerate, isGenerating }: PromptInputProps) => {
               </Select>
             </div>
           </div>
-          
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Sections to Generate</label>
-            <div className="flex flex-wrap gap-2">
-              {["hero", "features", "testimonial", "pricing", "about", "cta", "contact"].map((section) => (
-                <Button
-                  key={section}
-                  type="button"
-                  variant={selectedSections.includes(section) ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => toggleSection(section)}
-                  className={`capitalize ${
-                    selectedSections.includes(section) 
-                      ? "bg-gemini-gradient" 
-                      : "hover:bg-secondary/50"
-                  }`}
-                >
-                  {section}
-                </Button>
-              ))}
-            </div>
-          </div>
         </div>
       </CardContent>
       <CardFooter>
         <Button 
           onClick={handleGenerate} 
-          disabled={!prompt.trim() || isGenerating || selectedSections.length === 0}
+          disabled={!prompt.trim() || isGenerating}
           className="w-full bg-gemini-gradient hover:opacity-90 transition-opacity"
         >
-          {isGenerating ? "Generating..." : "Generate Landing Page"}
+          {isGenerating ? "Generating..." : "Generate Component"}
         </Button>
       </CardFooter>
     </Card>

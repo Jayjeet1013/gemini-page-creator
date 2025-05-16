@@ -9,7 +9,7 @@ const Header = () => {
           <div className="bg-gemini-gradient p-1.5 rounded-md">
             <Zap className="h-5 w-5 text-white" />
           </div>
-          <h1 className="font-bold text-xl">Landing Page Generator</h1>
+          <h1 className="font-bold text-xl">UI Component Generator</h1>
           <div className="hidden md:flex items-center bg-muted text-xs px-2 py-0.5 rounded-full text-muted-foreground">
             Powered by Gemini 1.5 Flash
           </div>

@@ -3,56 +3,52 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Zap, Github } from "lucide-react";
 import Header from "@/components/Header";
-import PagePreview from "@/components/PagePreview";
+import ComponentPreview from "@/components/PagePreview";
 import PromptInput from "@/components/PromptInput";
-import { LandingPageService } from "@/services/landingPageService";
-import { GenerateLandingPageParams, LandingPageSection } from "@/types/gemini";
+import { ComponentGeneratorService } from "@/services/landingPageService";
+import { GenerateComponentParams, GeneratedComponent } from "@/types/gemini";
 import { Button } from "@/components/ui/button";
 
 // Fixed Gemini API key
 const GEMINI_API_KEY = "AIzaSyDHrZrJY9LyzpNEUTg76vJ2jYryTs2Vrzc";
 
 const Index = () => {
-  const [landingPageService] = useState<LandingPageService>(
-    new LandingPageService(GEMINI_API_KEY)
+  const [componentService] = useState<ComponentGeneratorService>(
+    new ComponentGeneratorService(GEMINI_API_KEY)
   );
-  const [generatedSections, setGeneratedSections] = useState<LandingPageSection[]>([]);
+  const [generatedComponent, setGeneratedComponent] = useState<GeneratedComponent | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
-  const [regeneratingSection, setRegeneratingSection] = useState<string | null>(null);
+  const [isRegenerating, setIsRegenerating] = useState(false);
 
-  const handleGenerate = async (params: GenerateLandingPageParams) => {
+  const handleGenerate = async (params: GenerateComponentParams) => {
     setIsGenerating(true);
     try {
-      const sections = await landingPageService.generateLandingPage(params);
-      setGeneratedSections(sections);
-      toast.success("Landing page generated successfully!");
+      const component = await componentService.generateComponent(params);
+      setGeneratedComponent(component);
+      toast.success("Component generated successfully!");
     } catch (error) {
       console.error("Generation error:", error);
-      toast.error("Failed to generate landing page. Please try again.");
+      toast.error("Failed to generate component. Please try again.");
     } finally {
       setIsGenerating(false);
     }
   };
 
-  const handleRegenerateSection = async (section: LandingPageSection) => {
-    setRegeneratingSection(section.type);
+  const handleRegenerateComponent = async (component: GeneratedComponent) => {
+    setIsRegenerating(true);
     try {
-      const newSection = await landingPageService.regenerateSection(
-        section,
-        "Create a new version of this section with a fresh approach"
+      const newComponent = await componentService.regenerateComponent(
+        component,
+        "Create a new version of this component with a fresh approach"
       );
       
-      // Replace the old section with the new one
-      setGeneratedSections(prev => 
-        prev.map(s => s.type === section.type ? newSection : s)
-      );
-      
-      toast.success(`${section.type} section regenerated!`);
+      setGeneratedComponent(newComponent);
+      toast.success(`${component.type} component regenerated!`);
     } catch (error) {
       console.error("Regeneration error:", error);
-      toast.error(`Failed to regenerate ${section.type} section`);
+      toast.error(`Failed to regenerate ${component.type} component`);
     } finally {
-      setRegeneratingSection(null);
+      setIsRegenerating(false);
     }
   };
 
@@ -77,11 +73,11 @@ const Index = () => {
               </div>
               
               <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gemini-gradient animate-gradient-shift">
-                Landing Page Generator
+                UI Component Generator
               </h1>
               
               <p className="text-lg text-muted-foreground max-w-lg mx-auto">
-                Create beautiful, production-ready landing pages in seconds with the power of AI
+                Create beautiful, production-ready UI components in seconds with the power of AI
               </p>
             </div>
 
@@ -90,14 +86,14 @@ const Index = () => {
               isGenerating={isGenerating}
             />
             
-            {generatedSections.length > 0 && (
+            {generatedComponent && (
               <div className="space-y-4">
                 <div className="p-4 bg-muted rounded-lg text-sm">
                   <h3 className="font-medium mb-2">Tips:</h3>
                   <ul className="space-y-1 list-disc list-inside text-muted-foreground">
-                    <li>Click "Regenerate" on any section to create a new version</li>
+                    <li>Click "Regenerate" to create a new version</li>
                     <li>View the HTML code by clicking the "HTML" tab</li>
-                    <li>Copy the entire HTML to use in your project</li>
+                    <li>Copy the HTML to use in your project</li>
                   </ul>
                 </div>
                 
@@ -120,18 +116,17 @@ const Index = () => {
                 <div className="inline-block bg-gemini-gradient p-3 rounded-lg animate-pulse">
                   <Zap className="h-6 w-6 text-white" />
                 </div>
-                <h3 className="text-xl font-medium">Generating Your Landing Page...</h3>
+                <h3 className="text-xl font-medium">Generating Your Component...</h3>
                 <p className="text-muted-foreground">
-                  This may take a few moments as we craft the perfect landing page
+                  This may take a few moments as we craft the perfect component
                 </p>
               </div>
             </div>
           ) : (
-            <PagePreview 
-              sections={generatedSections} 
-              onRegenerateSection={handleRegenerateSection} 
-              isRegenerating={!!regeneratingSection}
-              regeneratingSection={regeneratingSection}
+            <ComponentPreview 
+              component={generatedComponent} 
+              onRegenerate={handleRegenerateComponent} 
+              isRegenerating={isRegenerating}
             />
           )}
         </div>

@@ -3,39 +3,40 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { LandingPageSection } from "@/types/gemini";
+import { GeneratedComponent } from "@/types/gemini";
 import { Eye, Code, RefreshCw } from "lucide-react";
 
-interface PagePreviewProps {
-  sections: LandingPageSection[];
-  onRegenerateSection: (section: LandingPageSection) => void;
+interface ComponentPreviewProps {
+  component: GeneratedComponent | null;
+  onRegenerate: (component: GeneratedComponent) => void;
   isRegenerating: boolean;
-  regeneratingSection: string | null;
 }
 
-const PagePreview = ({ 
-  sections, 
-  onRegenerateSection, 
-  isRegenerating,
-  regeneratingSection 
-}: PagePreviewProps) => {
+const ComponentPreview = ({ 
+  component, 
+  onRegenerate, 
+  isRegenerating 
+}: ComponentPreviewProps) => {
   const [viewMode, setViewMode] = useState<"preview" | "code">("preview");
 
   const handleCopyHtml = () => {
-    const allHtml = sections.map(section => section.html).join('\n\n');
-    navigator.clipboard.writeText(allHtml);
+    if (!component?.html) return;
+    
+    navigator.clipboard.writeText(component.html);
     // Toast notification handled by parent component
   };
 
-  const handleRegenerateSection = (section: LandingPageSection) => {
-    onRegenerateSection(section);
+  const handleRegenerate = () => {
+    if (component) {
+      onRegenerate(component);
+    }
   };
 
-  if (!sections.length) {
+  if (!component) {
     return (
       <div className="w-full p-8 text-center border rounded-lg bg-muted/20">
         <p className="text-muted-foreground">
-          Generated landing page sections will appear here.
+          Generated component will appear here.
         </p>
       </div>
     );
@@ -65,47 +66,43 @@ const PagePreview = ({
             variant="outline" 
             onClick={handleCopyHtml}
           >
-            Copy All HTML
+            Copy HTML
           </Button>
         )}
       </div>
 
-      <div className="space-y-6">
-        {sections.map((section, index) => (
-          <Card key={`${section.type}-${index}`} className="overflow-hidden">
-            <div className="bg-muted p-2 flex items-center justify-between">
-              <span className="font-medium capitalize px-2">{section.type} Section</span>
-              <Button 
-                variant="ghost" 
-                size="sm"
-                onClick={() => handleRegenerateSection(section)}
-                disabled={isRegenerating}
-                className={`flex items-center gap-1 ${regeneratingSection === section.type ? 'animate-pulse-slow' : ''}`}
-              >
-                <RefreshCw className="h-4 w-4" />
-                {regeneratingSection === section.type ? 'Regenerating...' : 'Regenerate'}
-              </Button>
+      <Card className="overflow-hidden">
+        <div className="bg-muted p-2 flex items-center justify-between">
+          <span className="font-medium capitalize px-2">{component.type} Component</span>
+          <Button 
+            variant="ghost" 
+            size="sm"
+            onClick={handleRegenerate}
+            disabled={isRegenerating}
+            className={`flex items-center gap-1 ${isRegenerating ? 'animate-pulse-slow' : ''}`}
+          >
+            <RefreshCw className="h-4 w-4" />
+            {isRegenerating ? 'Regenerating...' : 'Regenerate'}
+          </Button>
+        </div>
+        
+        <div className="border-t">
+          {viewMode === "preview" ? (
+            <div 
+              className="p-4"
+              dangerouslySetInnerHTML={{ __html: component.html || "" }}
+            />
+          ) : (
+            <div className="p-4 overflow-auto max-h-[500px]">
+              <pre className="text-xs font-mono whitespace-pre-wrap break-all bg-muted p-4 rounded-md">
+                {component.html || "No HTML generated"}
+              </pre>
             </div>
-            
-            <div className="border-t">
-              {viewMode === "preview" ? (
-                <div 
-                  className="p-4"
-                  dangerouslySetInnerHTML={{ __html: section.html || "" }}
-                />
-              ) : (
-                <div className="p-4 overflow-auto max-h-[500px]">
-                  <pre className="text-xs font-mono whitespace-pre-wrap break-all bg-muted p-4 rounded-md">
-                    {section.html || "No HTML generated"}
-                  </pre>
-                </div>
-              )}
-            </div>
-          </Card>
-        ))}
-      </div>
+          )}
+        </div>
+      </Card>
     </div>
   );
 };
 
-export default PagePreview;
+export default ComponentPreview;

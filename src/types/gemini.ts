@@ -25,20 +25,33 @@ export interface GeminiResponse {
   };
 }
 
-export interface LandingPageSection {
-  type: 'hero' | 'features' | 'testimonial' | 'pricing' | 'cta' | 'about' | 'contact';
+export type ComponentType = 
+  'header' | 
+  'footer' | 
+  'signup' | 
+  'login' | 
+  'features' | 
+  'pricing' | 
+  'testimonial' | 
+  'cta' | 
+  'hero' | 
+  'contact' | 
+  'about' | 
+  'faq' | 
+  'gallery' | 
+  'stats' | 
+  'team' | 
+  'newsletter';
+
+export interface GeneratedComponent {
+  type: ComponentType;
   content: string;
-  title?: string;
-  html?: string;
-  subtitle?: string;
-  imageUrl?: string;
-  buttonText?: string;
-  buttonLink?: string;
+  html: string;
 }
 
-export interface GenerateLandingPageParams {
+export interface GenerateComponentParams {
   prompt: string;
-  sections?: string[];
+  componentType: ComponentType;
   style?: string;
   tone?: string;
   industry?: string;

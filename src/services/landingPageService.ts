@@ -1,8 +1,8 @@
 
 import { GeminiApiClient } from "@/api/geminiApi";
-import { GenerateLandingPageParams, LandingPageSection } from "@/types/gemini";
+import { GenerateComponentParams, GeneratedComponent, ComponentType } from "@/types/gemini";
 
-export class LandingPageService {
+export class ComponentGeneratorService {
   private client: GeminiApiClient;
 
   constructor(apiKey: string) {
@@ -12,44 +12,29 @@ export class LandingPageService {
     });
   }
 
-  async generateLandingPage(params: GenerateLandingPageParams): Promise<LandingPageSection[]> {
-    const { prompt, sections = ["hero", "features", "testimonial", "cta"], style = "modern", tone = "professional" } = params;
+  async generateComponent(params: GenerateComponentParams): Promise<GeneratedComponent> {
+    const { prompt, componentType, style = "modern", tone = "professional", industry } = params;
 
-    const landingPageSections: LandingPageSection[] = [];
+    try {
+      const componentPrompt = this.createComponentPrompt(componentType, prompt, style, tone, industry);
+      const componentContent = await this.client.generate(componentPrompt);
+      const componentHtml = await this.client.generateHtml(
+        `Create a ${componentType} component for a website based on this content: ${componentContent}`
+      );
 
-    // Generate content for each section
-    for (const section of sections) {
-      try {
-        const sectionPrompt = this.createSectionPrompt(section, prompt, style, tone, params.industry);
-        const sectionContent = await this.client.generate(sectionPrompt);
-        const sectionHtml = await this.client.generateHtml(
-          `Create a ${section} section for a landing page based on this content: ${sectionContent}`
-        );
-
-        landingPageSections.push({
-          type: section as LandingPageSection['type'],
-          content: sectionContent,
-          html: sectionHtml,
-        });
-      } catch (error) {
-        console.error(`Error generating ${section} section:`, error);
-        // Add a placeholder error section
-        landingPageSections.push({
-          type: section as LandingPageSection['type'],
-          content: `Error generating ${section} section. Please try again.`,
-          html: `<div class="p-6 bg-red-50 border border-red-200 rounded-lg text-red-700">
-            <h3 class="text-lg font-medium">Error generating ${section} section</h3>
-            <p>Please try again or modify your prompt.</p>
-          </div>`,
-        });
-      }
+      return {
+        type: componentType,
+        content: componentContent,
+        html: componentHtml,
+      };
+    } catch (error) {
+      console.error(`Error generating ${componentType} component:`, error);
+      throw error;
     }
-
-    return landingPageSections;
   }
 
-  private createSectionPrompt(
-    section: string,
+  private createComponentPrompt(
+    componentType: ComponentType,
     prompt: string,
     style: string,
     tone: string,
@@ -57,12 +42,12 @@ export class LandingPageService {
   ): string {
     const industryContext = industry ? `Industry: ${industry}` : "";
     
-    const sectionPrompts: Record<string, string> = {
-      hero: `
-        Create compelling hero section content for a landing page with:
-        - An attention-grabbing headline (max 10 words)
-        - A persuasive subheading (1-2 sentences)
-        - A clear call-to-action button text
+    const componentPrompts: Record<ComponentType, string> = {
+      header: `
+        Create content for a website header with:
+        - Logo/brand name
+        - Navigation links (3-5 items)
+        - Call-to-action button (if applicable)
         
         Style: ${style}
         Tone: ${tone}
@@ -72,19 +57,109 @@ export class LandingPageService {
         
         Format your response as JSON with these fields:
         {
-          "title": "Main headline",
-          "subtitle": "Subheading text",
-          "buttonText": "CTA button text",
-          "buttonLink": "#"
+          "brandName": "Brand name",
+          "navItems": [
+            { "label": "Home", "url": "#" },
+            { "label": "Features", "url": "#" }
+          ],
+          "cta": { "label": "Sign Up", "url": "#" } // Optional
+        }
+      `,
+      
+      footer: `
+        Create content for a website footer with:
+        - Copyright info
+        - Optional social media links
+        - Optional secondary navigation
+        - Optional contact info
+        
+        Style: ${style}
+        Tone: ${tone}
+        ${industryContext}
+        
+        Based on this prompt: ${prompt}
+        
+        Format your response as JSON with these fields:
+        {
+          "brandName": "Brand name",
+          "copyright": "Copyright text",
+          "navGroups": [
+            {
+              "title": "Group title",
+              "links": [
+                { "label": "Link 1", "url": "#" }
+              ]
+            }
+          ],
+          "socialLinks": [
+            { "platform": "Twitter", "url": "#" }
+          ],
+          "contactInfo": {
+            "email": "contact@example.com",
+            "phone": "+1 (555) 123-4567"
+          }
+        }
+      `,
+      
+      signup: `
+        Create content for a sign-up form with:
+        - Form title/heading
+        - Brief description
+        - Fields needed (name, email, etc.)
+        - Button text
+        - Optional: privacy policy text
+        
+        Style: ${style}
+        Tone: ${tone}
+        ${industryContext}
+        
+        Based on this prompt: ${prompt}
+        
+        Format your response as JSON with these fields:
+        {
+          "title": "Form heading",
+          "description": "Brief description",
+          "fields": [
+            { "name": "fullName", "label": "Full Name", "type": "text", "required": true },
+            { "name": "email", "label": "Email Address", "type": "email", "required": true }
+          ],
+          "buttonText": "Sign Up",
+          "privacyText": "We respect your privacy..." // Optional
+        }
+      `,
+      
+      login: `
+        Create content for a login form with:
+        - Form title/heading
+        - Fields needed (email, password)
+        - Button text
+        - Optional: forgot password link
+        - Optional: sign up alternative
+        
+        Style: ${style}
+        Tone: ${tone}
+        ${industryContext}
+        
+        Based on this prompt: ${prompt}
+        
+        Format your response as JSON with these fields:
+        {
+          "title": "Login",
+          "fields": [
+            { "name": "email", "label": "Email", "type": "email", "required": true },
+            { "name": "password", "label": "Password", "type": "password", "required": true }
+          ],
+          "buttonText": "Log In",
+          "forgotPasswordText": "Forgot password?",
+          "signUpText": "Don't have an account? Sign up"
         }
       `,
       
       features: `
         Create content for a features section with:
-        - A section title
-        - 3-4 key features with:
-          - Feature name (2-5 words)
-          - Brief description (1 sentence each)
+        - Section title
+        - Brief description
+        - 3-6 features with name, description, and optional icon name
         
         Style: ${style}
         Tone: ${tone}
@@ -94,25 +169,51 @@ export class LandingPageService {
         
         Format your response as JSON with these fields:
         {
-          "sectionTitle": "Features section title",
+          "title": "Features title",
+          "description": "Section description",
           "features": [
             {
-              "name": "Feature 1 name",
-              "description": "Feature 1 description"
-            },
+              "name": "Feature 1",
+              "description": "Feature 1 description",
+              "icon": "zap" // Optional, use a name from lucide-react icons
+            }
+          ]
+        }
+      `,
+      
+      pricing: `
+        Create content for a pricing table with:
+        - Section title
+        - Brief description
+        - 2-4 pricing tiers with name, price, features, and button text
+        
+        Style: ${style}
+        Tone: ${tone}
+        ${industryContext}
+        
+        Based on this prompt: ${prompt}
+        
+        Format your response as JSON with these fields:
+        {
+          "title": "Pricing",
+          "description": "Choose a plan that works for you",
+          "tiers": [
             {
-              "name": "Feature 2 name",
-              "description": "Feature 2 description"
+              "name": "Basic",
+              "price": "$9",
+              "period": "month",
+              "description": "For individuals",
+              "features": ["Feature 1", "Feature 2"],
+              "buttonText": "Get Started"
             }
           ]
         }
       `,
       
       testimonial: `
-        Create a realistic customer testimonial with:
-        - A quote from a satisfied customer (2-3 sentences)
-        - Customer name
-        - Customer role/company
+        Create content for a testimonial section with:
+        - Section title
+        - 1-3 testimonials with quote, name, role, and company
         
         Style: ${style}
         Tone: ${tone}
@@ -122,17 +223,23 @@ export class LandingPageService {
         
         Format your response as JSON with these fields:
         {
-          "quote": "Testimonial text",
-          "name": "Customer name",
-          "role": "Customer role/company"
+          "title": "What Our Clients Say",
+          "testimonials": [
+            {
+              "quote": "Testimonial text here...",
+              "name": "Client Name",
+              "role": "Role",
+              "company": "Company"
+            }
+          ]
         }
       `,
       
       cta: `
-        Create a call-to-action section with:
-        - A compelling heading (5-8 words)
-        - A brief description (1-2 sentences)
-        - Button text
+        Create content for a call-to-action section with:
+        - Heading
+        - Description
+        - Button text and optional secondary button
         
         Style: ${style}
         Tone: ${tone}
@@ -144,15 +251,22 @@ export class LandingPageService {
         {
           "title": "CTA heading",
           "description": "CTA description",
-          "buttonText": "Button text"
+          "primaryButton": {
+            "text": "Get Started",
+            "url": "#"
+          },
+          "secondaryButton": {
+            "text": "Learn More",
+            "url": "#"
+          }
         }
       `,
       
-      about: `
-        Create content for an "About Us" section with:
-        - A section title
-        - Company story/background (2-3 sentences)
-        - Mission statement (1 sentence)
+      hero: `
+        Create content for a hero section with:
+        - Headline
+        - Subheadline
+        - CTA button text
         
         Style: ${style}
         Tone: ${tone}
@@ -162,52 +276,18 @@ export class LandingPageService {
         
         Format your response as JSON with these fields:
         {
-          "title": "About section title",
-          "story": "Company background text",
-          "mission": "Mission statement"
-        }
-      `,
-      
-      pricing: `
-        Create content for a pricing section with:
-        - A section title
-        - 3 pricing tiers with:
-          - Tier name
-          - Price
-          - 3-5 features included
-          - CTA text
-        
-        Style: ${style}
-        Tone: ${tone}
-        ${industryContext}
-        
-        Based on this prompt: ${prompt}
-        
-        Format your response as JSON with these fields:
-        {
-          "sectionTitle": "Pricing section title",
-          "tiers": [
-            {
-              "name": "Basic tier",
-              "price": "$X/month",
-              "features": ["Feature 1", "Feature 2", "Feature 3"],
-              "buttonText": "Get Started"
-            },
-            {
-              "name": "Pro tier",
-              "price": "$X/month",
-              "features": ["Feature 1", "Feature 2", "Feature 3", "Feature 4"],
-              "buttonText": "Buy Now"
-            }
-          ]
+          "headline": "Main headline",
+          "subheadline": "Supporting text",
+          "buttonText": "CTA text"
         }
       `,
       
       contact: `
         Create content for a contact section with:
-        - A section title
-        - A brief invitation to get in touch (1-2 sentences)
-        - Placeholder email and phone
+        - Section title
+        - Brief message
+        - Contact form fields
+        - Contact information (email, phone, address)
         
         Style: ${style}
         Tone: ${tone}
@@ -217,38 +297,194 @@ export class LandingPageService {
         
         Format your response as JSON with these fields:
         {
-          "title": "Contact section title",
-          "message": "Contact invitation text",
-          "email": "contact@example.com",
-          "phone": "+1 (555) 123-4567"
+          "title": "Contact Us",
+          "message": "Get in touch with us",
+          "fields": [
+            { "name": "name", "label": "Name", "type": "text" },
+            { "name": "email", "label": "Email", "type": "email" }
+          ],
+          "buttonText": "Send Message",
+          "contactInfo": {
+            "email": "contact@example.com",
+            "phone": "+1 (555) 123-4567",
+            "address": "123 Main St, City, State"
+          }
+        }
+      `,
+      
+      about: `
+        Create content for an about section with:
+        - Section title
+        - Company story/mission
+        - Optional team members
+        
+        Style: ${style}
+        Tone: ${tone}
+        ${industryContext}
+        
+        Based on this prompt: ${prompt}
+        
+        Format your response as JSON with these fields:
+        {
+          "title": "About Us",
+          "story": "Company story/mission",
+          "values": ["Value 1", "Value 2"],
+          "team": [
+            {
+              "name": "Team Member",
+              "role": "Position",
+              "bio": "Brief bio"
+            }
+          ]
+        }
+      `,
+      
+      faq: `
+        Create content for a FAQ section with:
+        - Section title
+        - 4-8 questions and answers
+        
+        Style: ${style}
+        Tone: ${tone}
+        ${industryContext}
+        
+        Based on this prompt: ${prompt}
+        
+        Format your response as JSON with these fields:
+        {
+          "title": "Frequently Asked Questions",
+          "items": [
+            {
+              "question": "Question 1",
+              "answer": "Answer 1"
+            }
+          ]
+        }
+      `,
+      
+      gallery: `
+        Create content for a gallery/portfolio section with:
+        - Section title
+        - Brief description
+        - 4-8 items with title, category, and description
+        
+        Style: ${style}
+        Tone: ${tone}
+        ${industryContext}
+        
+        Based on this prompt: ${prompt}
+        
+        Format your response as JSON with these fields:
+        {
+          "title": "Our Portfolio",
+          "description": "Check out our work",
+          "items": [
+            {
+              "title": "Project 1",
+              "category": "Category",
+              "description": "Brief description"
+            }
+          ]
+        }
+      `,
+      
+      stats: `
+        Create content for a statistics section with:
+        - Section title
+        - 3-6 statistics with number, label, and optional description
+        
+        Style: ${style}
+        Tone: ${tone}
+        ${industryContext}
+        
+        Based on this prompt: ${prompt}
+        
+        Format your response as JSON with these fields:
+        {
+          "title": "Our Impact",
+          "stats": [
+            {
+              "value": "100+",
+              "label": "Clients",
+              "description": "Happy clients worldwide" // Optional
+            }
+          ]
+        }
+      `,
+      
+      team: `
+        Create content for a team section with:
+        - Section title
+        - Brief description
+        - 3-8 team members with name, role, and short bio
+        
+        Style: ${style}
+        Tone: ${tone}
+        ${industryContext}
+        
+        Based on this prompt: ${prompt}
+        
+        Format your response as JSON with these fields:
+        {
+          "title": "Our Team",
+          "description": "Meet the people behind our success",
+          "members": [
+            {
+              "name": "Name",
+              "role": "Position",
+              "bio": "Brief bio"
+            }
+          ]
+        }
+      `,
+      
+      newsletter: `
+        Create content for a newsletter signup section with:
+        - Section title
+        - Brief description
+        - Form fields
+        - Button text
+        
+        Style: ${style}
+        Tone: ${tone}
+        ${industryContext}
+        
+        Based on this prompt: ${prompt}
+        
+        Format your response as JSON with these fields:
+        {
+          "title": "Subscribe to Our Newsletter",
+          "description": "Stay updated with our latest news",
+          "buttonText": "Subscribe",
+          "privacyText": "We respect your privacy" // Optional
         }
       `
     };
 
-    return sectionPrompts[section] || 
-      `Create content for a ${section} section for a landing page based on: ${prompt}`;
+    return componentPrompts[componentType] || 
+      `Create content for a ${componentType} component based on: ${prompt}`;
   }
 
-  async regenerateSection(section: LandingPageSection, prompt: string): Promise<LandingPageSection> {
+  async regenerateComponent(component: GeneratedComponent, prompt: string): Promise<GeneratedComponent> {
     try {
       const enhancedPrompt = `
-        Regenerate content for a ${section.type} section with a fresh approach.
-        Previous content: ${section.content}
+        Regenerate content for a ${component.type} component with a fresh approach.
+        Previous content: ${component.content}
         New direction: ${prompt}
       `;
       
       const newContent = await this.client.generate(enhancedPrompt);
       const newHtml = await this.client.generateHtml(
-        `Create a ${section.type} section for a landing page based on this content: ${newContent}`
+        `Create a ${component.type} component based on this content: ${newContent}`
       );
 
       return {
-        ...section,
+        ...component,
         content: newContent,
         html: newHtml,
       };
     } catch (error) {
-      console.error(`Error regenerating ${section.type} section:`, error);
+      console.error(`Error regenerating ${component.type} component:`, error);
       throw error;
     }
   }
