@@ -1,12 +1,7 @@
 
-import { Button } from "@/components/ui/button";
 import { Zap } from "lucide-react";
 
-interface HeaderProps {
-  onResetApiKey: () => void;
-}
-
-const Header = ({ onResetApiKey }: HeaderProps) => {
+const Header = () => {
   return (
     <header className="border-b bg-white">
       <div className="container flex h-16 items-center justify-between">
@@ -16,18 +11,8 @@ const Header = ({ onResetApiKey }: HeaderProps) => {
           </div>
           <h1 className="font-bold text-xl">Landing Page Generator</h1>
           <div className="hidden md:flex items-center bg-muted text-xs px-2 py-0.5 rounded-full text-muted-foreground">
-            Powered by Gemini AI
+            Powered by Gemini 1.5 Flash
           </div>
-        </div>
-        
-        <div className="flex items-center gap-2">
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            onClick={onResetApiKey}
-          >
-            Change API Key
-          </Button>
         </div>
       </div>
     </header>

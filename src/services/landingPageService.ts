@@ -8,7 +8,7 @@ export class LandingPageService {
   constructor(apiKey: string) {
     this.client = new GeminiApiClient({
       apiKey,
-      model: "gemini-pro",
+      model: "gemini-1.5-flash",
     });
   }
 
