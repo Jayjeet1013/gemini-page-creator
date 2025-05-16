@@ -2,7 +2,7 @@
 import { GeminiConfig, GeminiGenerationConfig, GeminiResponse } from "@/types/gemini";
 
 const DEFAULT_CONFIG: GeminiGenerationConfig = {
-  temperature: 0.8,
+  temperature: 0.9,  // Increased temperature for more creative outputs
   topP: 0.95,
   topK: 32,
   maxOutputTokens: 2048,
@@ -72,24 +72,26 @@ export class GeminiApiClient {
     }
   }
 
-  // Helper to generate HTML from a prompt
+  // Enhanced HTML generator with better styling instructions
   async generateHtml(prompt: string): Promise<string> {
     const enhancedPrompt = `
-Generate valid, semantic, and accessible HTML for the following: 
 ${prompt}
 
-The HTML should:
-- Be self-contained (no external CSS)
-- Use inline Tailwind CSS classes
-- Be responsive
-- Follow best practices for accessibility
-- Include only the HTML for this specific component (no full page markup)
-- Use semantic HTML5 elements where appropriate
-- Not include any script tags or external resources
+Remember to:
+- Use visually appealing layouts with proper spacing
+- Incorporate beautiful gradients and color schemes
+- Add subtle animations and hover effects
+- Use unsplash placeholder images (https://images.unsplash.com/photo-...)
+- Include modern UI patterns like cards, shadows, and rounded corners
+- Make the design responsive for all devices
+- Use decorative elements like patterns, dividers, or accents
+- Style with Tailwind CSS classes for beautiful typography, colors, and spacing
 
-Output ONLY the HTML, nothing else:
+Output ONLY the HTML code with inline Tailwind CSS, nothing else.
 `;
 
-    return this.generate(enhancedPrompt);
+    return this.generate(enhancedPrompt, {
+      temperature: 0.85, // Slightly increased temperature for creative designs
+    });
   }
 }
